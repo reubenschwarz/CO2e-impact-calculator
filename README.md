@@ -1,1 +1,1 @@
-# o2-impact-calculator
+# CO2e-impact-calculator
