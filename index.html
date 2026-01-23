@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO2e Impact Calculator - Lives Saved Estimator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: #333;
+            background-color: #f0f0f0;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Selection Tab */
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        /* Lifestyle Change Cards */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+        }
+
+        .card.selected {
+            border-color: #2563eb;
+            background-color: #f0f7ff;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .card-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #2563eb;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .card-savings {
+            font-weight: 600;
+            color: #059669;
+            font-size: 14px;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #555;
+            margin-left: 32px;
+            margin-bottom: 6px;
+        }
+
+        .card-source {
+            font-size: 11px;
+            color: #888;
+            margin-left: 32px;
+            font-style: italic;
+        }
+
+        /* Summary Bar */
+        .summary-bar {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            position: sticky;
+            bottom: 20px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-text {
+            font-size: 14px;
+        }
+
+        .summary-text strong {
+            color: #059669;
+        }
+
+        .calculate-btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .calculate-btn:hover {
+            background-color: #1d4ed8;
+        }
+
+        .calculate-btn:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Results Tab */
+        .results-container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .results-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .lives-saved {
+            font-size: 48px;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 8px;
+        }
+
+        .lives-saved-label {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .uncertainty-range {
+            font-size: 13px;
+            color: #666;
+            padding: 12px;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .results-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .results-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .breakdown-item:not(:last-child) {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .breakdown-total {
+            font-weight: 600;
+            background-color: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        .interpretation-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .interpretation-title {
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .interpretation-text {
+            font-size: 13px;
+            color: #166534;
+        }
+
+        .caveat-box {
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .caveat-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .caveat-text {
+            font-size: 12px;
+            color: #92400e;
+        }
+
+        .no-selection {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-selection-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Methodology Tab */
+        .methodology-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 16px;
+        }
+
+        .methodology-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a1a;
+        }
+
+        .methodology-text {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 12px;
+        }
+
+        .methodology-formula {
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+
+        .methodology-link {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .methodology-link:hover {
+            text-decoration: underline;
+        }
+
+        .source-item {
+            padding: 8px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .source-item:last-child {
+            border-bottom: none;
+        }
+
+        .source-category {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .limitation-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .limitation-bullet {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: none;
+                width: 100%;
+                text-align: center;
+            }
+
+            .summary-bar {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .lives-saved {
+                font-size: 36px;
+            }
+
+            .card-header {
+                flex-wrap: wrap;
+            }
+
+            .card-savings {
+                width: 100%;
+                margin-left: 32px;
+                margin-top: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CO2e Impact Calculator</h1>
+        <p class="subtitle">Estimate how many lives could be saved through your climate actions</p>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="selection">Step 1: Choose Life Changes</button>
+            <button class="tab" data-tab="results">Step 2: View Impact</button>
+            <button class="tab" data-tab="methodology">Methodology & Sources</button>
+        </div>
+
+        <!-- Selection Tab -->
+        <div id="selection" class="tab-content active">
+            <h2 class="section-title">Select Your Climate Actions</h2>
+            <p class="section-subtitle">Choose the lifestyle changes you're committed to for the next 10 years</p>
+
+            <div class="cards-container" id="cards-container">
+                <!-- Cards will be generated by JavaScript -->
+            </div>
+
+            <div class="summary-bar">
+                <span class="summary-text">
+                    Selected: <strong id="selected-count">0</strong> changes |
+                    Annual savings: <strong id="annual-savings">0 kg</strong> CO2e |
+                    10-year total: <strong id="total-savings">0 kg</strong>
+                </span>
+                <button class="calculate-btn" id="calculate-btn" disabled>Calculate Impact</button>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results" class="tab-content">
+            <div class="no-selection" id="no-results">
+                <div class="no-selection-icon">📊</div>
+                <p>Select some lifestyle changes and click "Calculate Impact" to see your results.</p>
+            </div>
+            <div class="results-container" id="results-container" style="display: none;">
+                <!-- Results will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Methodology Tab -->
+        <div id="methodology" class="tab-content">
+            <div class="methodology-section">
+                <h3 class="methodology-title">How Lives Saved is Calculated</h3>
+                <p class="methodology-text">
+                    This calculator uses the <strong>Mortality Cost of Carbon (MCC)</strong> metric developed by
+                    R. Daniel Bressler in peer-reviewed research published in Nature Communications (2021).
+                </p>
+                <p class="methodology-text">
+                    The MCC estimates the number of deaths caused by temperature-related mortality for each
+                    additional metric ton of CO2 emitted. By reducing emissions, we can prevent these deaths.
+                </p>
+                <div class="methodology-formula">
+                    Lives Saved = (CO2e reduced in metric tons) × MCC
+                    <br><br>
+                    Central estimate: 0.000226 deaths per metric ton CO2e
+                    <br>
+                    Uncertainty range: -0.000171 to 0.000678 deaths per metric ton
+                </div>
+                <p class="methodology-text">
+                    <strong>Primary Source:</strong><br>
+                    <a href="https://www.nature.com/articles/s41467-021-24487-w" target="_blank" class="methodology-link">
+                        Bressler, R.D. (2021). The mortality cost of carbon. Nature Communications, 12, 4467.
+                    </a>
+                </p>
+            </div>
+
+            <div class="methodology-section">
+                <h3 class="methodology-title">CO2e Savings Sources</h3>
+                <div class="source-item">
+                    <span class="source-category">Aviation:</span> myclimate, Carbon Independent, ICAO Carbon Calculator
+                </div>
+                <div class="source-item">
+                    <span class="source-category">Transportation:</span> Wynes & Nicholas (2017), World Resources Institute
+                </div>
+                <div class="source-item">
+                    <span class="source-category">Diet:</span> Scarborough et al. (2014), Our World in Data, Poore & Nemecek (2018)
+                </div>
+                <div class="source-item">
+                    <span class="source-category">Energy:</span> Carbon Brief, EPA, Energy Saving Trust
+                </div>
+            </div>
+
+            <div class="methodology-section">
+                <h3 class="methodology-title">Important Limitations</h3>
+                <div class="limitation-item">
+                    <span class="limitation-bullet">!</span>
+                    <span>The MCC is a statistical estimate with significant uncertainty. The negative lower bound reflects uncertainty, not that emissions save lives.</span>
+                </div>
+                <div class="limitation-item">
+                    <span class="limitation-bullet">!</span>
+                    <span>Results represent expected statistical lives saved, not specific identifiable individuals.</span>
+                </div>
+                <div class="limitation-item">
+                    <span class="limitation-bullet">!</span>
+                    <span>CO2e savings estimates are averages and vary significantly by location, energy mix, and individual circumstances.</span>
+                </div>
+                <div class="limitation-item">
+                    <span class="limitation-bullet">!</span>
+                    <span>This calculator only considers temperature-related mortality. Climate change has many other health and societal impacts.</span>
+                </div>
+                <div class="limitation-item">
+                    <span class="limitation-bullet">!</span>
+                    <span>Assumes the selected changes are maintained consistently over the 10-year period.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Scientific constants from Bressler 2021
+        const MCC_CENTRAL = 0.000226;  // Deaths per metric ton CO2e
+        const MCC_LOW = -0.000171;      // Lower uncertainty bound
+        const MCC_HIGH = 0.000678;      // Upper uncertainty bound
+        const KG_PER_METRIC_TON = 1000;
+        const PROJECTION_YEARS = 10;
+
+        // Lifestyle changes data
+        const lifestyleChanges = [
+            {
+                id: "flight_syd_lon",
+                name: "Avoid one Sydney-London round-trip flight per year",
+                annual_kg: 4500,
+                description: "Long-haul flights are among the most carbon-intensive activities. A round-trip from Sydney to London emits approximately 4.5 tonnes of CO2e per passenger.",
+                source: "myclimate, Carbon Independent"
+            },
+            {
+                id: "go_car_free",
+                name: "Go car-free",
+                annual_kg: 2400,
+                description: "Giving up your personal vehicle and relying on public transport, cycling, and walking. Assumes average car usage of ~12,000 km/year.",
+                source: "Wynes & Nicholas (2017), Our World in Data"
+            },
+            {
+                id: "switch_ev",
+                name: "Switch to electric vehicle",
+                annual_kg: 2000,
+                description: "Replacing a petrol or diesel car with an electric vehicle. Savings depend on local electricity grid mix; estimate assumes moderate renewable energy.",
+                source: "Carbon Brief, World Resources Institute"
+            },
+            {
+                id: "renewable_energy",
+                name: "Switch to 100% renewable home energy",
+                annual_kg: 1500,
+                description: "Installing solar panels or switching to a certified 100% renewable energy provider for household electricity.",
+                source: "EPA, Energy Saving Trust, Carbon Brief"
+            },
+            {
+                id: "reduce_meat",
+                name: "Reduce meat consumption to 2 meals per week",
+                annual_kg: 920,
+                description: "Reducing from a typical Western diet (~7-10 meat meals/week) to just 2 meat meals per week, replacing with plant-based alternatives.",
+                source: "Scarborough et al. (2014), Our World in Data"
+            },
+            {
+                id: "cycle_commute",
+                name: "Cycle instead of drive for daily commute",
+                annual_kg: 500,
+                description: "Replacing one car trip per day (~10km average) with cycling. Assumes ~230 working days per year.",
+                source: "World Resources Institute, Carbon Independent"
+            },
+            {
+                id: "short_flight",
+                name: "Avoid one short-haul flight per year",
+                annual_kg: 500,
+                description: "Taking the train instead of flying for trips of 1-3 hours. Short flights are particularly inefficient due to takeoff/landing emissions.",
+                source: "myclimate, European Environment Agency"
+            },
+            {
+                id: "eliminate_dairy",
+                name: "Eliminate dairy products",
+                annual_kg: 420,
+                description: "Switching from dairy milk, cheese, and yogurt to plant-based alternatives. Dairy production has significant methane emissions.",
+                source: "Poore & Nemecek (2018), Our World in Data"
+            },
+            {
+                id: "reduce_food_waste",
+                name: "Reduce food waste by 50%",
+                annual_kg: 300,
+                description: "Better meal planning, proper storage, and using leftovers. Average household wastes ~30% of food purchased.",
+                source: "Project Drawdown, WRAP UK"
+            },
+            {
+                id: "energy_efficiency",
+                name: "Implement energy-efficient home practices",
+                annual_kg: 300,
+                description: "LED lighting, smart thermostat, improved insulation, energy-efficient appliances, and mindful energy use habits.",
+                source: "Energy Saving Trust, EPA"
+            }
+        ];
+
+        // State
+        let selectedChanges = new Set();
+
+        // DOM Elements
+        const cardsContainer = document.getElementById('cards-container');
+        const selectedCountEl = document.getElementById('selected-count');
+        const annualSavingsEl = document.getElementById('annual-savings');
+        const totalSavingsEl = document.getElementById('total-savings');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const noResults = document.getElementById('no-results');
+
+        // Initialize
+        function init() {
+            renderCards();
+            setupTabNavigation();
+            calculateBtn.addEventListener('click', calculateImpact);
+        }
+
+        // Render lifestyle change cards
+        function renderCards() {
+            cardsContainer.innerHTML = lifestyleChanges.map(change => `
+                <div class="card ${selectedChanges.has(change.id) ? 'selected' : ''}" data-id="${change.id}">
+                    <div class="card-header">
+                        <input type="checkbox" class="card-checkbox" id="${change.id}" ${selectedChanges.has(change.id) ? 'checked' : ''}>
+                        <label class="card-title" for="${change.id}">${change.name}</label>
+                        <span class="card-savings">${formatNumber(change.annual_kg)} kg/year</span>
+                    </div>
+                    <p class="card-description">${change.description}</p>
+                    <p class="card-source">Source: ${change.source}</p>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = card.querySelector('.card-checkbox');
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    toggleChange(card.dataset.id);
+                });
+
+                card.querySelector('.card-checkbox').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleChange(card.dataset.id);
+                });
+            });
+        }
+
+        // Toggle change selection
+        function toggleChange(id) {
+            if (selectedChanges.has(id)) {
+                selectedChanges.delete(id);
+            } else {
+                selectedChanges.add(id);
+            }
+            updateUI();
+        }
+
+        // Update UI based on selections
+        function updateUI() {
+            // Update card styles
+            document.querySelectorAll('.card').forEach(card => {
+                const id = card.dataset.id;
+                const checkbox = card.querySelector('.card-checkbox');
+                if (selectedChanges.has(id)) {
+                    card.classList.add('selected');
+                    checkbox.checked = true;
+                } else {
+                    card.classList.remove('selected');
+                    checkbox.checked = false;
+                }
+            });
+
+            // Calculate totals
+            const annualTotal = calculateAnnualTotal();
+            const tenYearTotal = annualTotal * PROJECTION_YEARS;
+
+            // Update summary
+            selectedCountEl.textContent = selectedChanges.size;
+            annualSavingsEl.textContent = formatNumber(annualTotal) + ' kg';
+            totalSavingsEl.textContent = formatNumber(tenYearTotal) + ' kg';
+
+            // Enable/disable calculate button
+            calculateBtn.disabled = selectedChanges.size === 0;
+        }
+
+        // Calculate annual CO2e total
+        function calculateAnnualTotal() {
+            let total = 0;
+            selectedChanges.forEach(id => {
+                const change = lifestyleChanges.find(c => c.id === id);
+                if (change) {
+                    total += change.annual_kg;
+                }
+            });
+            return total;
+        }
+
+        // Calculate lives saved
+        function calculateLivesSaved(co2e_kg) {
+            const co2e_tons = co2e_kg / KG_PER_METRIC_TON;
+            return {
+                central: co2e_tons * MCC_CENTRAL,
+                low: co2e_tons * MCC_LOW,
+                high: co2e_tons * MCC_HIGH,
+                co2e_tons: co2e_tons
+            };
+        }
+
+        // Calculate impact and show results
+        function calculateImpact() {
+            if (selectedChanges.size === 0) return;
+
+            const annualTotal = calculateAnnualTotal();
+            const tenYearTotal = annualTotal * PROJECTION_YEARS;
+            const results = calculateLivesSaved(tenYearTotal);
+
+            renderResults(results, annualTotal, tenYearTotal);
+
+            // Switch to results tab
+            document.querySelector('[data-tab="results"]').click();
+        }
+
+        // Render results
+        function renderResults(results, annualTotal, tenYearTotal) {
+            const selectedList = lifestyleChanges.filter(c => selectedChanges.has(c.id));
+
+            resultsContainer.innerHTML = `
+                <div class="results-header">
+                    <p class="results-title">Based on your ${selectedChanges.size} selected change${selectedChanges.size > 1 ? 's' : ''} over 10 years:</p>
+                    <div class="lives-saved">${formatDecimal(results.central, 4)}</div>
+                    <p class="lives-saved-label">estimated lives saved</p>
+                    <div class="uncertainty-range">
+                        Uncertainty range: ${formatDecimal(results.low, 4)} to ${formatDecimal(results.high, 4)} lives
+                    </div>
+                </div>
+
+                <div class="results-section">
+                    <h4 class="results-section-title">CO2e Reduction Breakdown</h4>
+                    ${selectedList.map(change => `
+                        <div class="breakdown-item">
+                            <span>${change.name}</span>
+                            <span>${formatNumber(change.annual_kg * PROJECTION_YEARS)} kg</span>
+                        </div>
+                    `).join('')}
+                    <div class="breakdown-item breakdown-total">
+                        <span>10-Year Total</span>
+                        <span>${formatNumber(tenYearTotal)} kg (${formatDecimal(results.co2e_tons, 1)} metric tons)</span>
+                    </div>
+                </div>
+
+                <div class="interpretation-box">
+                    <p class="interpretation-title">What This Means</p>
+                    <p class="interpretation-text">
+                        ${getInterpretation(results.central, results.co2e_tons)}
+                    </p>
+                </div>
+
+                <div class="caveat-box">
+                    <p class="caveat-title">Important Caveats</p>
+                    <p class="caveat-text">
+                        These estimates are based on statistical modeling and represent expected value calculations.
+                        The actual impact depends on many factors including global climate policy, energy grid changes,
+                        and complex climate-health interactions. The uncertainty range reflects significant scientific
+                        uncertainty in translating emissions to mortality outcomes.
+                    </p>
+                </div>
+            `;
+
+            noResults.style.display = 'none';
+            resultsContainer.style.display = 'block';
+        }
+
+        // Get interpretation text
+        function getInterpretation(livesSaved, co2e_tons) {
+            if (livesSaved >= 1) {
+                return `Your commitment to these changes could prevent approximately ${formatDecimal(livesSaved, 2)} premature deaths from climate-related temperature stress over the coming decades. This is a substantial individual contribution.`;
+            } else if (livesSaved >= 0.1) {
+                const percentLife = livesSaved * 100;
+                return `While ${formatDecimal(livesSaved, 4)} lives may seem small, it represents meaningful progress. If ${Math.ceil(1/livesSaved)} people made similar changes, together you would save approximately 1 life. Your ${formatDecimal(co2e_tons, 1)} metric tons of CO2e reduction is significant.`;
+            } else if (livesSaved >= 0.01) {
+                const peopleNeeded = Math.ceil(1/livesSaved);
+                return `Your individual contribution of ${formatDecimal(livesSaved, 4)} lives saved combines with others to make a difference. If ${formatNumber(peopleNeeded)} people made similar commitments, approximately 1 life would be saved. Every action counts.`;
+            } else {
+                const peopleNeeded = Math.ceil(1/livesSaved);
+                return `While individual impact (${formatDecimal(livesSaved, 6)} lives) is small, collective action matters. If ${formatNumber(peopleNeeded)} people made similar changes, approximately 1 life would be saved. Systemic change requires many individuals acting together.`;
+            }
+        }
+
+        // Tab navigation
+        function setupTabNavigation() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Update tab buttons
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Update tab content
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                });
+            });
+        }
+
+        // Utility: Format number with commas
+        function formatNumber(num) {
+            return num.toLocaleString('en-US');
+        }
+
+        // Utility: Format decimal to specified places
+        function formatDecimal(num, places) {
+            return num.toFixed(places);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
